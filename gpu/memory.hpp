@@ -24,7 +24,7 @@ class gpu_walks
 {
 public:
    hid_t hops;
-   walk_t max;
+   walk_t nwalk;
    walker_t *walks;
 };
 
@@ -72,5 +72,28 @@ void graphtogpu(graph_cache *cpu_cache,graph_block *cpu_block)
    bid_t *m_w=(bid_t*)malloc(sizeof(bid_t)*cpu_cache->ncblock);
    for(int i=0;i<cpu_cache->ncblock;i++)
       m_w[i]=cpu_cache->walk_blocks[i];
-   checkCudaError(cudaMemcpy(g_cache->walk_blocks,m_w,sizeof(bid_t)*cpu_cache->ncblock,cudaMemcpyHostToDevice)); 
+   checkCudaError(cudaMemcpy(g_cache->walk_blocks,m_w,sizeof(bid_t)*cpu_cache->ncblock,cudaMemcpyHostToDevice));
+
+}
+
+void changewalk(graph_walk *cpu,walker_t *gpu,int n)
+{
+   for(int i=0;i<n;i++)
+   {
+      gpu[i]=cpu->walks[i];
+   }
+}
+void walktogpu(graph_walk *cpu)
+{
+   gpu_walks *m;
+   gpu_walks *g_walks;
+   int nwalks=cpu->nwalks();
+   checkCudaError(cudaMalloc((void**)&(m->walks),sizeof(walker_t)*nwalks));
+   checkCudaError(cudaMalloc((void**)&(g_walks),sizeof(gpu_walks)));
+   m->hops=10;//需要更改
+   m->nwalk=nwalks;
+   walker_t *c=(walker_t *)malloc(sizeof(walker_t)*nwalks);
+   changewalk(cpu,c,nwalks);
+   checkCudaError(cudaMemcpy(m->walks,c,sizeof(walker_t)*nwalks,cudaMemcpyHostToDevice));
+   checkCudaError(cudaMemcpy(g_walks,m,sizeof(gpu_walks),cudaMemcpyHostToDevice));
 }
